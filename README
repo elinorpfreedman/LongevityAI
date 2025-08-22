@@ -1,0 +1,10 @@
+# Health Tracker API
+
+A FastAPI + PostgreSQL + SQLAlchemy project for tracking health data (users, physical activity, sleep, and blood tests).
+
+# Clone repo
+git clone https://github.com/YOUR_USERNAME/health-tracker-api.git
+cd health-tracker-api
+
+# Install dependencies
+pip install -r requirements.txt
