@@ -1,10 +1,72 @@
-# Health Tracker API
+The Health Tracker API is a FastAPI-based application that allows users to monitor and manage their health data, including physical activities, sleep patterns, and blood test results. The application provides a /get_health_score endpoint that calculates an aggregated health score for a user, incorporating physical activity, sleep, and blood test metrics. The health score is returned in a FHIR-compliant format, making it compatible with healthcare standards.
 
-A FastAPI + PostgreSQL + SQLAlchemy project for tracking health data (users, physical activity, sleep, and blood tests).
+Includes:
 
-# Clone repo
-git clone https://github.com/YOUR_USERNAME/health-tracker-api.git
-cd health-tracker-api
+    CRUD operations for Users
 
-# Install dependencies
-pip install -r requirements.txt
+    CRUD operations for PhysicalActivity, SleepActivity, and BloodTest
+
+    /get_health_score endpoint: calculates a user’s overall health score
+
+    FHIR-compliant JSON output for the health score
+
+Prerequisites
+
+    Python 3.12+
+
+    Docker & Docker Compose
+
+    PostgreSQL (if running outside Docker)
+
+    pip (for Python dependencies)
+
+Setup and Installation
+
+    Clone the repository:
+    git clone https://github.com/elinorpfreedman/LongevityAI
+
+
+    Create a .env file in the project root (example values):
+
+        DATABASE_URL=postgresql://postgres:healthpass@localhost:5432/healthtracker
+        TEST_DATABASE_URL=postgresql://postgres:healthpass@localhost:5432/healthtracker_test
+        RUN_MIGRATIONS=1
+
+
+    Install Python dependencies:
+
+        pip install -r requirements.txt
+
+    Running the Project (Docker)
+
+        Build and start the containers:
+
+            docker-compose up --build
+
+
+    The FastAPI application will be available at:
+
+        http://localhost:8000
+
+
+    Interactive API docs (Swagger UI):
+
+        http://localhost:8000/docs
+
+
+    Shut down containers:
+
+        docker-compose down
+
+    Database Migrations
+
+        The project uses Alembic for database migrations. To apply migrations:
+
+        Generate a migration (if you add new models):
+
+            alembic revision --autogenerate -m "Add description of migration"
+
+
+        Apply migrations:
+
+            alembic upgrade head
