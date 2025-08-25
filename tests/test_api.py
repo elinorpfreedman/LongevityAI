@@ -1,4 +1,3 @@
-# tests/test_api.py
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -6,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 from healthDB import Base, User, PhysicalActivity, SleepActivity, BloodTest
 from main import app, get_db
-import random, string, uuid
+import uuid
 
 # -------------------------
 # Test DB Setup
@@ -25,9 +24,6 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
-# -------------------------
-# Utilities
-# -------------------------
 def random_username(prefix="user"):
     return f"{prefix}_{uuid.uuid4().hex[:8]}"
 
@@ -40,9 +36,6 @@ def make_api_user(username=None, email=None):
     assert response.status_code == 201
     return response.json()
 
-# -------------------------
-# Fixtures
-# -------------------------
 @pytest.fixture(scope="module")
 def db():
     # Reset database at start
@@ -64,9 +57,6 @@ def test_user(db):
     db.query(User).delete()
     db.commit()
 
-# -------------------------
-# User CRUD Tests
-# -------------------------
 def test_create_user():
     username = random_username("create")
     response = client.post("/users/", json={"username": username, "email": f"{username}@test.com"})
@@ -98,9 +88,6 @@ def test_delete_user():
     response = client.get(f"/users/{user['id']}")
     assert response.status_code == 404
 
-# -------------------------
-# PhysicalActivity CRUD Tests
-# -------------------------
 @pytest.fixture
 def physical_activity_fixture(test_user, db):
     activity = PhysicalActivity(user_id=test_user.id, activity_type="running", duration=60)
@@ -133,9 +120,7 @@ def test_delete_physical_activity(physical_activity_fixture, db):
     assert response.status_code == 200
     assert db.query(PhysicalActivity).filter(PhysicalActivity.id == physical_activity_fixture.id).first() is None
 
-# -------------------------
-# SleepActivity CRUD Tests
-# -------------------------
+
 @pytest.fixture
 def sleep_activity_fixture(test_user, db):
     start = datetime(2025, 8, 24, 22, 0)
@@ -174,9 +159,7 @@ def test_delete_sleep_activity(sleep_activity_fixture, db):
     assert response.status_code == 200
     assert db.query(SleepActivity).filter(SleepActivity.id == sleep_activity_fixture.id).first() is None
 
-# -------------------------
-# BloodTest CRUD Tests
-# -------------------------
+
 @pytest.fixture
 def blood_test_fixture(test_user, db):
     test = BloodTest(user_id=test_user.id, test_name="glucose", result=90, unit="mg/dL")

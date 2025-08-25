@@ -1,4 +1,3 @@
-# tests/test_health_score.py
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -9,9 +8,7 @@ import random
 from datetime import datetime, timedelta, timezone
 import requests
 
-# -------------------------
-# Test DB Setup
-# -------------------------
+
 SQLALCHEMY_TEST_DATABASE_URL = "postgresql+psycopg2://postgres:healthpass@localhost:5432/healthtracker_test"
 engine = create_engine(SQLALCHEMY_TEST_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -26,9 +23,6 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
-# -------------------------
-# Fixtures
-# -------------------------
 @pytest.fixture(scope="module")
 def db():
     Base.metadata.create_all(bind=engine)
@@ -75,9 +69,7 @@ def seed_users(db):
     db.query(User).delete()
     db.commit()
 
-# -------------------------
-# Health Score Endpoint Test
-# -------------------------
+
 def test_get_health_score(seed_users):
     for user in seed_users:
         response = client.get(f"/get_health_score?user_id={user.id}")

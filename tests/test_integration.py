@@ -1,14 +1,12 @@
-# tests/test_integration.py
 import pytest
 from datetime import datetime
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from healthDB import Base, User, PhysicalActivity, SleepActivity, BloodTest
+from healthDB import Base
 import crud
 from schemas import UserCreate, PhysicalActivityCreate, SleepActivityCreate, BloodTestCreate
 
-# ------------------- Test DB setup -------------------
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"  # in-memory for tests
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -18,14 +16,12 @@ Base.metadata.create_all(bind=engine)
 
 @pytest.fixture(scope="function")
 def db_session():
-    """Creates a new database session for a test."""
     session = TestingSessionLocal()
     try:
         yield session
     finally:
         session.close()
 
-# ------------------- User Tests -------------------
 def test_create_user(db_session):
     user_in = UserCreate(username="testuser", email="testuser@test.com")
     user = crud.create_user(db_session, user_in)
@@ -53,7 +49,6 @@ def test_delete_user(db_session):
     assert deleted.id == user.id
     assert crud.get_user(db_session, user.id) is None
 
-# ------------------- PhysicalActivity Tests -------------------
 def test_create_physical_activity(db_session):
     user = crud.create_user(db_session, UserCreate(username="pauser", email="pa@test.com"))
     activity_in = PhysicalActivityCreate(activity_type="running", duration=30)
@@ -75,8 +70,6 @@ def test_delete_physical_activity(db_session):
     assert deleted.id == activity.id
     assert crud.get_physical_activity(db_session, activity.id) is None
 
-# ------------------- SleepActivity Tests -------------------
-# ------------------- SleepActivity Tests -------------------
 def test_create_sleep_activity(db_session):
     user = crud.create_user(db_session, UserCreate(username="sleepuser", email="sleep@test.com"))
     sleep_in = SleepActivityCreate(
@@ -88,8 +81,7 @@ def test_create_sleep_activity(db_session):
     assert sleep.id is not None
     assert sleep.user_id == user.id
     assert sleep.quality == "good"
-    # Duration in minutes
-    assert sleep.duration == 480  # 8 hours * 60 minutes
+    assert sleep.duration == 480 
 
 def test_update_sleep_activity(db_session):
     user = crud.create_user(db_session, UserCreate(username="sleepupd", email="sleepupd@test.com"))
@@ -117,7 +109,6 @@ def test_delete_sleep_activity(db_session):
     assert deleted.id == sleep.id
     assert crud.get_sleep_activity(db_session, sleep.id) is None
 
-# ------------------- BloodTest Tests -------------------
 def test_create_blood_test(db_session):
     user = crud.create_user(db_session, UserCreate(username="blooduser", email="blood@test.com"))
     test_in = BloodTestCreate(test_name="cholesterol", result=190.5, unit="mg/dL")

@@ -5,7 +5,7 @@ from fastapi_activity import router as physical_router
 from fastapi_blood import router as blood_router
 from fastapi_sleep import router as sleep_router
 from database import get_db
-from healthDB import Base, User, PhysicalActivity, SleepActivity, BloodTest
+from healthDB import User
 from healthscore import calculate_health_score
 from healthscore import health_score_to_fhir
 

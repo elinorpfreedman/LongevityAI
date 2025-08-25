@@ -1,11 +1,9 @@
 from sqlalchemy.orm import Session
 from healthDB import User, PhysicalActivity, SleepActivity, BloodTest
-from schemas import UserCreate, UserUpdate, PhysicalActivityCreate, SleepActivityCreate, BloodTestCreate
+from schemas import UserCreate, PhysicalActivityCreate, SleepActivityCreate, BloodTestCreate
 from datetime import datetime
 
-# -------------------------
-# User CRUD
-# -------------------------
+
 def create_user(db: Session, user: UserCreate):
     db_user = User(username=user.username, email=user.email)
     db.add(db_user)
@@ -37,9 +35,6 @@ def delete_user(db: Session, user_id: int):
     db.commit()
     return db_user
 
-# -------------------------
-# Physical Activity CRUD
-# -------------------------
 def create_physical_activity(db: Session, user_id: int, activity: PhysicalActivityCreate):
     db_activity = PhysicalActivity(user_id=user_id, activity_type=activity.activity_type, duration=activity.duration)
     db.add(db_activity)
@@ -71,9 +66,6 @@ def delete_physical_activity(db: Session, activity_id: int):
     db.commit()
     return activity
 
-# -------------------------
-# Sleep Activity CRUD
-# -------------------------
 def create_sleep_activity(db: Session, user_id: int, sleep: SleepActivityCreate):
     duration = int((sleep.end_time - sleep.start_time).total_seconds() / 60)
     db_sleep = SleepActivity(
@@ -99,7 +91,6 @@ def update_sleep_activity(db: Session, sleep_id: int, updates: dict):
     if not sleep:
         return None
 
-    # Convert start_time and end_time from str to datetime if needed
     if "start_time" in updates and isinstance(updates["start_time"], str):
         updates["start_time"] = datetime.fromisoformat(updates["start_time"])
     if "end_time" in updates and isinstance(updates["end_time"], str):
@@ -108,7 +99,6 @@ def update_sleep_activity(db: Session, sleep_id: int, updates: dict):
     for key, value in updates.items():
         setattr(sleep, key, value)
 
-    # Recalculate duration if start_time or end_time changed
     if "start_time" in updates or "end_time" in updates:
         sleep.duration = int((sleep.end_time - sleep.start_time).total_seconds() / 60)
 
@@ -124,9 +114,7 @@ def delete_sleep_activity(db: Session, sleep_id: int):
     db.commit()
     return sleep
 
-# -------------------------
-# Blood Test CRUD
-# -------------------------
+
 def create_blood_test(db: Session, user_id: int, test: BloodTestCreate):
     db_test = BloodTest(
         user_id=user_id,

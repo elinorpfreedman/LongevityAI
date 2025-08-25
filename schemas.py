@@ -1,4 +1,4 @@
-# schemas.py
+
 from pydantic import BaseModel, EmailStr, Field
 from pydantic.config import ConfigDict
 from typing import List, Optional
