@@ -6,7 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from healthDB import Base, User, PhysicalActivity, SleepActivity, BloodTest
 from main import app, get_db
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import requests
 
 # -------------------------
 # Test DB Setup
@@ -50,7 +51,7 @@ def seed_users(db):
             db.add(pa)
         # Add sleep activities
         for _ in range(3):
-            start = datetime.utcnow() - timedelta(hours=random.randint(6, 10))
+            start = datetime.now(timezone.utc) - timedelta(hours=random.randint(6, 10))
             end = start + timedelta(minutes=random.randint(360, 540))
             sa = SleepActivity(
                 user_id=user.id,
@@ -99,4 +100,11 @@ def test_health_score_no_data(db):
     assert response.status_code == 200
     data = response.json()
     assert data["valueQuantity"]["value"] == 0  # No data → score should be 0
+    
+def fetch_patient(patient_id):
+    url = f"https://fhir.example.com/Patient/{patient_id}"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        return resp.json()
+    return None
 

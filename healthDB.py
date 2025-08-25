@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, event
 from sqlalchemy.orm import declarative_base, relationship
-from datetime import datetime
+from datetime import datetime, timezone
 
 Base = declarative_base()
 
@@ -11,7 +11,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
     physical_activities = relationship(
         "PhysicalActivity", back_populates="user", cascade="all, delete-orphan"
@@ -31,7 +31,7 @@ class PhysicalActivity(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     activity_type = Column(String, nullable=False)
     duration = Column(Float, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="physical_activities")
 
@@ -63,6 +63,6 @@ class BloodTest(Base):
     test_name = Column(String, nullable=False)
     result = Column(Float, nullable=False)
     unit = Column(String, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="blood_tests")

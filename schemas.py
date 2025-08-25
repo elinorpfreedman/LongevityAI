@@ -55,7 +55,7 @@ class SleepActivityResponse(SleepActivityBase):
     quality: str
     duration: int | None = None
     
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 class BloodTestBase(BaseModel):
     test_name: str
