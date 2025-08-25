@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 from healthDB import Base, User, PhysicalActivity, SleepActivity, BloodTest
 from main import app, get_db
-import random, string
+import random, string, uuid
 
 # -------------------------
 # Test DB Setup
@@ -26,11 +26,26 @@ app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 # -------------------------
+# Utilities
+# -------------------------
+def random_username(prefix="user"):
+    return f"{prefix}_{uuid.uuid4().hex[:8]}"
+
+def make_api_user(username=None, email=None):
+    if username is None:
+        username = random_username("api")
+    if email is None:
+        email = f"{username}@test.com"
+    response = client.post("/users/", json={"username": username, "email": email})
+    assert response.status_code == 201
+    return response.json()
+
+# -------------------------
 # Fixtures
 # -------------------------
 @pytest.fixture(scope="module")
 def db():
-    # Reset database
+    # Reset database at start
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
@@ -40,47 +55,48 @@ def db():
 
 @pytest.fixture
 def test_user(db):
-    db.query(User).delete()  # Clear users first
-    db.commit()
-    user = User(username="testuser", email="test@test.com")
+    username = random_username("fixture")
+    user = User(username=username, email=f"{username}@test.com")
     db.add(user)
     db.commit()
     db.refresh(user)
     yield user
+    db.query(User).delete()
+    db.commit()
 
 # -------------------------
 # User CRUD Tests
 # -------------------------
-def random_username():
-    return "user_" + "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
-
 def test_create_user():
-    username = random_username()
+    username = random_username("create")
     response = client.post("/users/", json={"username": username, "email": f"{username}@test.com"})
     assert response.status_code == 201
     data = response.json()
     assert data["username"] == username
 
-def test_get_user(test_user):
-    response = client.get(f"/users/{test_user.id}")
+def test_get_user():
+    user = make_api_user()
+    response = client.get(f"/users/{user['id']}")
     assert response.status_code == 200
     data = response.json()
-    assert data["username"] == test_user.username
+    assert data["username"] == user["username"]
+    assert data["email"] == user["email"]
 
-def test_update_user(test_user):
-    response = client.put(f"/users/{test_user.id}", json={"username": "updateduser", "email": test_user.email})
+def test_update_user():
+    user = make_api_user()
+    new_username = random_username("updated")
+    response = client.put(f"/users/{user['id']}", json={"username": new_username, "email": user["email"]})
     assert response.status_code == 200
     data = response.json()
-    assert data["username"] == "updateduser"
+    assert data["username"] == new_username
 
-def test_delete_user(db):
-    user = User(username="tobedeleted", email="del@test.com")
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    response = client.delete(f"/users/{user.id}")
+def test_delete_user():
+    user = make_api_user()
+    response = client.delete(f"/users/{user['id']}")
     assert response.status_code == 200
-    assert db.query(User).filter(User.id == user.id).first() is None
+    # Verify deleted
+    response = client.get(f"/users/{user['id']}")
+    assert response.status_code == 404
 
 # -------------------------
 # PhysicalActivity CRUD Tests

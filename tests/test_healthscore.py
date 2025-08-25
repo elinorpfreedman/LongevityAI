@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from healthDB import Base, User, PhysicalActivity, SleepActivity, BloodTest
 from main import app, get_db
 import random
-import datetime
+from datetime import datetime, timedelta
 
 # -------------------------
 # Test DB Setup
@@ -50,7 +50,15 @@ def seed_users(db):
             db.add(pa)
         # Add sleep activities
         for _ in range(3):
-            sa = SleepActivity(user_id=user.id, duration=random.randint(360, 540))
+            start = datetime.utcnow() - timedelta(hours=random.randint(6, 10))
+            end = start + timedelta(minutes=random.randint(360, 540))
+            sa = SleepActivity(
+                user_id=user.id,
+                start_time=start,
+                end_time=end,
+                duration=(end - start).seconds // 60,
+        quality=random.choice(["good","fair","poor"])
+    )
             db.add(sa)
         # Add blood tests
         for _ in range(2):
