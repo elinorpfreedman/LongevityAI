@@ -1,0 +1,43 @@
+Theoretical Questions:
+1. Deployment on AWS
+    ○ Explain how you would deploy the above application on AWS.
+
+    We need to handle 3 things - 
+    1. The FastApi app section - Elastic Beanstalk - which manages everything needed to run it, like the virtual servers , load balancers, and auto-scaling.
+    2. Database - Amazon RDS - We can work with PostGres and it automates administrative tasks like backups, patching, and scaling, etc.
+    3.Networking - VPC - Place the application and database inside a Virtual Private Cloud for security to protect personal health documentation
+
+2. Scaling & Troubleshooting
+Imagine the health tracker application has become wildly popular, gaining thousands of
+new users every day. However, users start reporting the following issues:
+
+   ○ How would you approach diagnosing and solving this problem?
+
+    ○ Health scores are inaccurate.
+        Unit testing for extreme edge cases and assuring that all the data is uploaded correctly and efficiently.
+        I would think about adding the scores inside the DB so it can be retreived automatically instead of calculating it each time
+
+    ○ API responses are delayed.
+
+        Work on identifying where the bottleneck occurs, I'd introduce caching for scores, optimize db indexes on frequiently accessed elements of the db
+
+    ○ The application occasionally crashes under load.
+        If possible, incorporate additional servers
+        Compute as much as possible in background task via multi threading.
+
+
+○ How would you design a long-term plan to make the system resilient to future
+scalability challenges?
+    Microservices - serparate services to try to contain traffic
+    Caching - for frequiently accessed points
+    Multithreading
+    Servers
+
+Optional Bonus Question
+● How would you map your internal user model to a FHIR Patient resource, and what
+challenges might you encounter when ensuring interoperability?
+
+The intial mapping would be quiet simple as it would probably be the usual Name, email etc. 
+The issues that could occur is really the fact that there are a lot of extra elements that FHIR Patient resources contain
+that I have not addressed. I attemped to make my db as modular and extentable as possible so that if need be I can add on other variables
+even if some aren't required to compute/create User and further classes.
