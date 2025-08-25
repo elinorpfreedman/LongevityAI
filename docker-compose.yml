@@ -1,14 +1,33 @@
-version: "3.8"
+version: "3.9"
 services:
-  db:
+  health_db:
     image: postgres:15
-    container_name: healthtracker_db
-    restart: always
     environment:
-      POSTGRES_USER: healthuser
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: healthpass
       POSTGRES_DB: healthtracker
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - health_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+
+  app:
+    build: .
+    command: >
+      sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      health_db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:healthpass@health_db:5432/healthtracker
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+
+volumes:
+  health_db_data:

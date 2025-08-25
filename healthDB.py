@@ -1,117 +1,68 @@
-from sqlalchemy import (
-    Table, Column, Integer, String, ForeignKey, DateTime, Float, MetaData
-)
-from sqlalchemy.orm import registry, relationship
-import datetime
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, event
+from sqlalchemy.orm import declarative_base, relationship
+from datetime import datetime
 
-metadata = MetaData()
-mapper_registry = registry(metadata=metadata)
+Base = declarative_base()
 
-user_table = Table(
-    "users",
-    metadata,
-    Column("id", Integer, primary_key=True, index=True),
-    Column("username", String, unique=True, nullable=False),
-    Column("email", String, unique=True, nullable=False, index=True),
-    Column("created_at", DateTime, default=datetime.datetime.utcnow),
-)
+# ------------------- User -------------------
+class User(Base):
+    __tablename__ = "users"
 
-class User:
-    def __init__(self, username: str, email: str):
-        self.username = username
-        self.email = email
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-mapper_registry.map_imperatively(
-    User,
-    user_table,
-    properties={
-        "physical_activities": relationship(
-            "PhysicalActivity", back_populates="user", cascade="all, delete-orphan"
-        ),
-        "sleep_activities": relationship(
-            "SleepActivity", back_populates="user", cascade="all, delete-orphan"
-        ),
-        "blood_tests": relationship(
-            "BloodTest", back_populates="user", cascade="all, delete-orphan"
-        ),
-    },
-)
+    physical_activities = relationship(
+        "PhysicalActivity", back_populates="user", cascade="all, delete-orphan"
+    )
+    sleep_activities = relationship(
+        "SleepActivity", back_populates="user", cascade="all, delete-orphan"
+    )
+    blood_tests = relationship(
+        "BloodTest", back_populates="user", cascade="all, delete-orphan"
+    )
 
-physical_activity_table = Table(
-    "physical_activities",
-    metadata,
-    Column("id", Integer, primary_key=True, index=True),
-    Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE")),
-    Column("activity_type", String, nullable=False),
-    Column("duration", Float, nullable=False),
-    Column("timestamp", DateTime, default=datetime.datetime.utcnow),
-)
+# ------------------- PhysicalActivity -------------------
+class PhysicalActivity(Base):
+    __tablename__ = "physical_activities"
 
-class PhysicalActivity:
-    def __init__(self, user_id: int, activity_type: str, duration: float):
-        self.user_id = user_id
-        self.activity_type = activity_type
-        self.duration = duration
-        self.timestamp = datetime.datetime.utcnow()
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    activity_type = Column(String, nullable=False)
+    duration = Column(Float, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
 
-mapper_registry.map_imperatively(
-    PhysicalActivity,
-    physical_activity_table,
-    properties={
-        "user": relationship("User", back_populates="physical_activities"),
-    },
-)
+    user = relationship("User", back_populates="physical_activities")
 
-sleep_activity_table = Table(
-    "sleep_activities",
-    metadata,
-    Column("id", Integer, primary_key=True, index=True),
-    Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE")),
-    Column("start_time", DateTime, nullable=False),
-    Column("end_time", DateTime, nullable=False),
-    Column("quality", String),  
-    Column("timestamp", DateTime, default=datetime.datetime.utcnow),
-)
+# ------------------- SleepActivity -------------------
+class SleepActivity(Base):
+    __tablename__ = "sleep_activities"
 
-class SleepActivity:
-    def __init__(self, user_id: int, start_time: datetime.datetime, end_time: datetime.datetime, quality: str):
-        self.user_id = user_id
-        self.start_time = start_time
-        self.end_time = end_time
-        self.quality = quality
-        self.timestamp = datetime.datetime.utcnow()
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    start_time = Column(DateTime, nullable=False)
+    end_time = Column(DateTime, nullable=False)
+    duration = Column(Integer)
+    quality = Column(String)
 
-mapper_registry.map_imperatively(
-    SleepActivity,
-    sleep_activity_table,
-    properties={
-        "user": relationship("User", back_populates="sleep_activities"),
-    },
-)
+    user = relationship("User", back_populates="sleep_activities")
 
-blood_test_table = Table(
-    "blood_tests",
-    metadata,
-    Column("id", Integer, primary_key=True, index=True),
-    Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE")),
-    Column("test_name", String, nullable=False), 
-    Column("result", Float, nullable=False),
-    Column("unit", String, nullable=False), 
-    Column("timestamp", DateTime, default=datetime.datetime.utcnow),
-)
+# Auto-calculate duration before insert
+@event.listens_for(SleepActivity, "before_insert")
+def calculate_sleep_duration(mapper, connection, target):
+    if target.start_time and target.end_time:
+        target.duration = int((target.end_time - target.start_time).total_seconds() / 60)
 
-class BloodTest:
-    def __init__(self, user_id: int, test_name: str, result: float, unit: str):
-        self.user_id = user_id
-        self.test_name = test_name
-        self.result = result
-        self.unit = unit
-        self.timestamp = datetime.datetime.utcnow()
+# ------------------- BloodTest -------------------
+class BloodTest(Base):
+    __tablename__ = "blood_tests"
 
-mapper_registry.map_imperatively(
-    BloodTest,
-    blood_test_table,
-    properties={
-        "user": relationship("User", back_populates="blood_tests"),
-    },
-)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    test_name = Column(String, nullable=False)
+    result = Column(Float, nullable=False)
+    unit = Column(String, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="blood_tests")
